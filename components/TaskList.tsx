@@ -19,12 +19,13 @@ const TaskList = forwardRef((_, ref) => {
   };
 
   const unshiftTask = (task: Task) => {
+    console.log("hi am task");
     setTaskList((prev) => {
       prev.unshift(task);
-      return prev;
+      return [...prev];
     });
   };
-
+  // df
   useImperativeHandle(ref, () => ({
     unshiftTask,
   }));
@@ -36,6 +37,9 @@ const TaskList = forwardRef((_, ref) => {
   return (
     <>
       <h2 className="text-lg text-red-400">Task list</h2>
+      {taskList.map((e) => (
+        <div key={e.id}>{e.name}</div>
+      ))}
     </>
   );
 });

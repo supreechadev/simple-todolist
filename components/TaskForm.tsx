@@ -5,7 +5,7 @@ import { yupResolver } from "@hookform/resolvers/yup";
 
 import PlusCircleIcon from "@components/icons/PlusCircleIcon";
 import { TaskServices } from "@api";
-import { Task } from "@types";
+import { Task, TaskStatusEnum } from "@types";
 
 interface TaskFormProps {
   onComplete?: (newTask: Task) => void;
@@ -22,14 +22,35 @@ const TaskForm: FC<TaskFormProps> = ({ onComplete }) => {
     register,
     handleSubmit,
     formState: { errors },
+    reset,
   } = useForm<Partial<Task>>({
     resolver: yupResolver(schema),
   });
 
-  const handleCreateTask = async () => {
+  const getUUID = () => {
+    let dt = new Date().getTime();
+    const uuid = "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(
+      /[xy]/g,
+      function (c) {
+        var r = (dt + Math.random() * 16) % 16 | 0;
+        dt = Math.floor(dt / 16);
+        return (c == "x" ? r : (r & 0x3) | 0x8).toString(16);
+      }
+    );
+    return uuid;
+  };
+
+  const handleCreateTask = async (name: string) => {
     try {
       setLoading(true);
-      const result = await TaskServices.createTask();
+      // const result = await TaskServices.createTask();
+      const newTask: Task = {
+        id: getUUID(),
+        statusId: TaskStatusEnum.TODO,
+        name,
+      };
+      onComplete?.(newTask);
+      reset();
     } catch (err) {
       console.error(err);
     } finally {
@@ -38,8 +59,9 @@ const TaskForm: FC<TaskFormProps> = ({ onComplete }) => {
   };
 
   const onSubmit = (data: Partial<Task>) => {
-    console.log("data", data);
-    handleCreateTask();
+    if (data.name && data.name.trim() !== "") {
+      handleCreateTask(data.name);
+    }
   };
 
   return (
