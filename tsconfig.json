@@ -9,7 +9,7 @@
       "@contexts/*": ["lib/contexts/*"],
       "@hooks/*": ["lib/hooks/*"],
       "@types": ["lib/types"],
-      "@utils/*": ["lib/utils/*"]
+      "@utils": ["lib/utils"]
     },
     "target": "es5",
     "lib": ["dom", "dom.iterable", "esnext"],

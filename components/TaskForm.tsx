@@ -6,6 +6,7 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import PlusCircleIcon from "@components/icons/PlusCircleIcon";
 import { TaskServices } from "@api";
 import { Task, TaskStatusEnum } from "@types";
+import { getUUID } from "@utils";
 
 interface TaskFormProps {
   onComplete?: (newTask: Task) => void;
@@ -23,22 +24,12 @@ const TaskForm: FC<TaskFormProps> = ({ onComplete }) => {
     handleSubmit,
     formState: { errors },
     reset,
+    watch,
   } = useForm<Partial<Task>>({
     resolver: yupResolver(schema),
   });
 
-  const getUUID = () => {
-    let dt = new Date().getTime();
-    const uuid = "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(
-      /[xy]/g,
-      function (c) {
-        var r = (dt + Math.random() * 16) % 16 | 0;
-        dt = Math.floor(dt / 16);
-        return (c == "x" ? r : (r & 0x3) | 0x8).toString(16);
-      }
-    );
-    return uuid;
-  };
+  const taskName = watch("name");
 
   const handleCreateTask = async (name: string) => {
     try {
@@ -80,8 +71,8 @@ const TaskForm: FC<TaskFormProps> = ({ onComplete }) => {
           )}
         </div>
         <button
-          className="self-end bg-blue-400 text-white py-1 px-3 flex items-center space-x-1 rounded hover:brightness-125 hover:shadow"
-          disabled={isLoading}
+          className="self-end bg-blue-400 text-white py-1 px-3 flex items-center space-x-1 rounded hover:brightness-125 hover:shadow disabled:opacity-50"
+          disabled={isLoading || !taskName || taskName.trim() === ""}
           type="submit"
         >
           <PlusCircleIcon className="w-4 h-4" />
