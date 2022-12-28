@@ -1,47 +1,39 @@
-import { forwardRef, useImperativeHandle, useState } from "react";
-import { Task } from "@types";
-import { TaskServices } from "@api";
-import { useEffect } from "react";
+import { FC, useEffect, useState } from "react";
+import { AnimatePresence } from "framer-motion";
+import TaskItem from "@components/TaskItem";
+import StatusFilter from "@components/StatusFilter";
+import { useTask } from "@contexts/taskContext";
+import { Task, TaskStatusId } from "@types";
 
-const TaskList = forwardRef((_, ref) => {
-  const [isLoading, setLoading] = useState<boolean>(false);
-  const [taskList, setTaskList] = useState<Array<Task>>([]);
-
-  const fetchTaskList = () => {
-    try {
-      setLoading(true);
-      const result = TaskServices.getTaskList();
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const unshiftTask = (task: Task) => {
-    setTaskList((prev) => {
-      prev.unshift(task);
-      return [...prev];
-    });
-  };
-  // df
-  useImperativeHandle(ref, () => ({
-    unshiftTask,
-  }));
+const TaskList: FC = () => {
+  const { taskList } = useTask();
+  const [filteredTaskList, setFilteredTaskList] = useState<Array<Task>>([]);
+  const [statusSelected, setStatusSeleted] = useState<Array<TaskStatusId>>([
+    1, 2, 3,
+  ]);
 
   useEffect(() => {
-    fetchTaskList();
-  }, []);
+    setFilteredTaskList(
+      taskList.filter((e) => statusSelected.includes(e.statusId))
+    );
+  }, [taskList, statusSelected]);
 
   return (
     <>
-      <h2 className="text-lg text-red-400">Task list</h2>
-      {taskList.map((e) => (
-        <div key={e.id}>{e.name}</div>
-      ))}
+      <header className="flex justify-between">
+        <h2 className="text-lg text-red-400">Task list</h2>
+        <StatusFilter value={statusSelected} onChange={setStatusSeleted} />
+      </header>
+      <ul>
+        <AnimatePresence>
+          {filteredTaskList.map((e) => (
+            <TaskItem key={e.id} data={e} />
+          ))}
+        </AnimatePresence>
+      </ul>
     </>
   );
-});
+};
 
 TaskList.displayName = "TaskList";
 

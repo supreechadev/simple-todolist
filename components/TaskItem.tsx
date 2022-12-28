@@ -1,42 +1,51 @@
-import { FC, useEffect, useReducer } from "react";
+import { FC, useState } from "react";
+import { motion, AnimationProps } from "framer-motion";
 import { Task } from "@types";
+import { useTask } from "@contexts/taskContext";
 
 interface TaskItemProps {
-  value: Task;
-  onDelete: () => void;
-  onChange: (task: Task) => void;
+  data: Task;
 }
 
-type State = Partial<Task>;
-
-interface Action {
-  type: keyof Task;
-  value: Task[keyof Task];
-}
-
-const reducer = (state: State, action: Action): State => {
-  const { type, value } = action;
-  switch (type) {
-    case "name":
-      return { ...state, name: value as Task["name"] };
-    case "statusId":
-      return {
-        ...state,
-        statusId: value as Task["statusId"],
-      };
-    default:
-      return state;
-  }
+const taskItemAnimation: AnimationProps = {
+  initial: { x: -30 },
+  animate: { x: 0 },
+  exit: {
+    x: 30,
+    transition: {
+      duration: 0.1,
+    },
+  },
 };
 
-const TaskItem: FC<TaskItemProps> = ({ value, onDelete, onChange }) => {
-  const [state, dispatch] = useReducer(reducer, { ...value });
+const TaskItem: FC<TaskItemProps> = ({ data }) => {
+  const { removeTask } = useTask();
 
-  useEffect(() => {
-    onChange?.({ ...state } as Task);
-  }, [onChange, state]);
+  const [isDeleting, setDeleting] = useState<boolean>(false);
+  const [isUpdating, setUpdating] = useState<boolean>(false);
 
-  return <div></div>;
+  const handleDeleteTask = async (taskId: Task["id"]) => {
+    try {
+      setDeleting(true);
+      return data;
+    } catch (err) {
+      console.error(err);
+      return;
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const handleDeleteClick = async () => {
+    const taskDeleted = await handleDeleteTask(data.id);
+    if (taskDeleted) removeTask(taskDeleted.id);
+  };
+
+  return (
+    <motion.li {...taskItemAnimation} layout>
+      {data.name} <button onClick={handleDeleteClick}>delete</button>
+    </motion.li>
+  );
 };
 
 export default TaskItem;

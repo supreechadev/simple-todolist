@@ -4,20 +4,17 @@ import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 
 import PlusCircleIcon from "@components/icons/PlusCircleIcon";
-import { TaskServices } from "@api";
 import { Task, TaskStatusEnum } from "@types";
 import { getUUID } from "@utils";
-
-interface TaskFormProps {
-  onComplete?: (newTask: Task) => void;
-}
+import { useTask } from "@contexts/taskContext";
 
 const schema = yup.object().shape({
   name: yup.string().required("please input task name"),
 });
 
-const TaskForm: FC<TaskFormProps> = ({ onComplete }) => {
-  const [isLoading, setLoading] = useState<boolean>(false);
+const TaskForm: FC = () => {
+  const [isCreating, setCreating] = useState<boolean>(false);
+  const { addTask } = useTask();
 
   const {
     register,
@@ -33,26 +30,26 @@ const TaskForm: FC<TaskFormProps> = ({ onComplete }) => {
 
   const handleCreateTask = async (name: string) => {
     try {
-      setLoading(true);
-      // const result = await TaskServices.createTask();
+      setCreating(true);
       const newTask: Task = {
         id: getUUID(),
         statusId: TaskStatusEnum.TODO,
         name,
       };
-      onComplete?.(newTask);
       reset();
+      return newTask;
     } catch (err) {
       console.error(err);
+      return;
     } finally {
-      setLoading(false);
+      setCreating(false);
     }
   };
 
-  const onSubmit = (data: Partial<Task>) => {
-    if (data.name && data.name.trim() !== "") {
-      handleCreateTask(data.name);
-    }
+  const onSubmit = async (data: Partial<Task>) => {
+    if (!data.name || data.name.trim() === "") return;
+    const newTask = await handleCreateTask(data.name);
+    if (newTask) addTask(newTask);
   };
 
   return (
@@ -72,7 +69,7 @@ const TaskForm: FC<TaskFormProps> = ({ onComplete }) => {
         </div>
         <button
           className="self-end bg-blue-400 text-white py-1 px-3 flex items-center space-x-1 rounded hover:brightness-125 hover:shadow disabled:opacity-50"
-          disabled={isLoading || !taskName || taskName.trim() === ""}
+          disabled={isCreating || !taskName || taskName.trim() === ""}
           type="submit"
         >
           <PlusCircleIcon className="w-4 h-4" />
