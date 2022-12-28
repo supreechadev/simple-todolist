@@ -1,5 +1,5 @@
 import { FC, useEffect, useState } from "react";
-import { AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import TaskItem from "@components/TaskItem";
 import StatusFilter from "@components/StatusFilter";
 import { useTask } from "@contexts/taskContext";
@@ -29,6 +29,28 @@ const TaskList: FC = () => {
           {filteredTaskList.map((e) => (
             <TaskItem key={e.id} data={e} />
           ))}
+          {filteredTaskList.length === 0 && (
+            <motion.li
+              initial={{
+                opacity: 0,
+              }}
+              animate={{
+                opacity: 1,
+                transition: {
+                  delay: 0.5,
+                  duration: 0.5,
+                },
+              }}
+              exit={{
+                transition: {
+                  duration: 0,
+                },
+              }}
+              className="text-center text-sm text-stone-400 py-4"
+            >
+              No task available
+            </motion.li>
+          )}
         </AnimatePresence>
       </ul>
     </>
