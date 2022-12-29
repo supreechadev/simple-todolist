@@ -1,18 +1,21 @@
 import { FC, useState } from "react";
+import { collection, addDoc } from "firebase/firestore";
 import * as yup from "yup";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 
 import PlusCircleIcon from "@components/icons/PlusCircleIcon";
 import { Task, TaskStatusEnum } from "@types";
-import { getUUID } from "@utils";
 import { useTask } from "@contexts/taskContext";
+import useFirebase from "@hooks/useFirebase";
 
 const schema = yup.object().shape({
   name: yup.string().required("please input task name"),
 });
 
 const TaskForm: FC = () => {
+  const { db } = useFirebase();
+
   const [isCreating, setCreating] = useState<boolean>(false);
   const { addTask } = useTask();
 
@@ -31,13 +34,15 @@ const TaskForm: FC = () => {
   const handleCreateTask = async (name: string) => {
     try {
       setCreating(true);
-      const newTask: Task = {
-        id: getUUID(),
+      const newTask: Partial<Task> = {
         statusId: TaskStatusEnum.TODO,
         name,
       };
+      const docRef = await addDoc(collection(db, "tasks"), {
+        ...newTask,
+      });
       reset();
-      return newTask;
+      return { ...newTask, id: docRef.id };
     } catch (err) {
       console.error(err);
       return;
@@ -49,7 +54,7 @@ const TaskForm: FC = () => {
   const onSubmit = async (data: Partial<Task>) => {
     if (!data.name || data.name.trim() === "") return;
     const newTask = await handleCreateTask(data.name);
-    if (newTask) addTask(newTask);
+    if (newTask) addTask(newTask as Task);
   };
 
   return (

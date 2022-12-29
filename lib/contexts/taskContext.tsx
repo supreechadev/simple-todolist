@@ -6,25 +6,9 @@ import {
   useState,
   useEffect,
 } from "react";
+import { collection, getDocs } from "firebase/firestore";
+import useFirebase from "@hooks/useFirebase";
 import { Task } from "@types";
-
-const MOCKS: Array<Task> = [
-  {
-    id: "001",
-    name: "Learning",
-    statusId: 1,
-  },
-  {
-    id: "002",
-    name: "Reading",
-    statusId: 1,
-  },
-  {
-    id: "003",
-    name: "Lisingin",
-    statusId: 2,
-  },
-];
 
 interface TaskContext {
   isLoading: boolean;
@@ -43,6 +27,8 @@ const TaskContext = createContext<TaskContext>({
 });
 
 export const TaskProvider: FC<PropsWithChildren> = ({ children }) => {
+  const { db } = useFirebase();
+
   const [isLoading, setLoading] = useState<boolean>(false);
   const [taskList, setTaskList] = useState<Array<Task>>([]);
 
@@ -67,10 +53,11 @@ export const TaskProvider: FC<PropsWithChildren> = ({ children }) => {
     });
   };
 
-  const fetchTask = () => {
+  const fetchTask = async () => {
     try {
       setLoading(true);
-      setTaskList(MOCKS);
+      const { docs } = await getDocs(collection(db, "tasks"));
+      setTaskList(docs.map((e) => ({ ...e.data(), id: e.id })) as Array<Task>);
     } catch (err) {
       console.error(err);
     } finally {

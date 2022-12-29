@@ -1,5 +1,6 @@
 import { ChangeEvent, FC, KeyboardEvent, useRef, useState } from "react";
 import { motion, AnimationProps } from "framer-motion";
+import { doc, deleteDoc, updateDoc } from "firebase/firestore";
 import { Task, TaskStatusEnum, TaskStatusId } from "@types";
 import { useTask } from "@contexts/taskContext";
 import StatusCircle from "@components/StatusCircle";
@@ -7,6 +8,7 @@ import TashIcon from "@components/icons/TashIcon";
 import PencilSquareIcon from "@components/icons/PencilSquareIcon";
 import CheckIcon from "@components/icons/CheckIcon";
 import MinusIcon from "@components/icons/MinusIcon";
+import useFirebase from "@hooks/useFirebase";
 
 interface TaskItemProps {
   data: Task;
@@ -23,6 +25,7 @@ const taskItemAnimation: AnimationProps = {
 
 const TaskItem: FC<TaskItemProps> = ({ data }) => {
   const { removeTask, updateTask } = useTask();
+  const { db } = useFirebase();
 
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -35,13 +38,8 @@ const TaskItem: FC<TaskItemProps> = ({ data }) => {
   const handleDeleteTask = async (taskId: Task["id"]) => {
     try {
       setDeleting(true);
-      const delay = new Promise((resolve) => {
-        setTimeout(() => {
-          resolve(true);
-        }, 1000);
-      });
-      await delay;
-      return data;
+      await deleteDoc(doc(db, "tasks", taskId));
+      return taskId;
     } catch (err) {
       console.error(err);
       return;
@@ -53,13 +51,8 @@ const TaskItem: FC<TaskItemProps> = ({ data }) => {
   const handleUpdateTask = async (task: Task) => {
     try {
       setUpdating(true);
-      const delay = new Promise((resolve) => {
-        setTimeout(() => {
-          resolve(true);
-        }, 1000);
-      });
-
-      await delay;
+      const { name, statusId, id } = task;
+      await updateDoc(doc(db, "tasks", id), { name, statusId });
       return task;
     } catch (err) {
       console.error(err);
@@ -70,8 +63,8 @@ const TaskItem: FC<TaskItemProps> = ({ data }) => {
   };
 
   const handleDeleteClick = async () => {
-    const taskDeleted = await handleDeleteTask(data.id);
-    if (taskDeleted) removeTask(taskDeleted.id);
+    const taskDeletedId = await handleDeleteTask(data.id);
+    if (taskDeletedId) removeTask(taskDeletedId);
   };
 
   const handleNameChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -108,6 +101,7 @@ const TaskItem: FC<TaskItemProps> = ({ data }) => {
       ...data,
       statusId: newStatus > 3 ? 1 : (newStatus as TaskStatusId),
     };
+    await handleUpdateTask(updatedTask);
     setForm(updatedTask);
     updateTask(updatedTask);
   };
